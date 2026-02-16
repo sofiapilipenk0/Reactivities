@@ -5,7 +5,7 @@ import { useActivities } from "../../../lib/hooks/useActivities";
 export default function ActivityList() {
     const {activities, isPending}= useActivities();
 
-  if (!activities || isPending) return <Typography>Loading...</Typography>
+  if (!activities || isPending) return <Typography color="white">Loading...</Typography>
 
   return (
     <Box sx={{display: 'flex', flexDirection: 'column', gap: 3}}>
