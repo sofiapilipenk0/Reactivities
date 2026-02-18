@@ -1,6 +1,7 @@
 using System;
 using Domain;
 
+
 namespace Persistence;
 
 public class DbInitializer
