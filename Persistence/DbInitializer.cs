@@ -1,13 +1,30 @@
 using System;
 using Domain;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace Persistence;
 
 public class DbInitializer
 {
-    public static async Task SeedData(AppDbContext context)
+    public static async Task SeedData(AppDbContext context, UserManager<User> userManager)
     {
+        if  (!userManager.Users.Any())
+        {
+            var users = new List<User>
+            {
+                new() {DisplayName = "ShadowMilkCookie", UserName = "shadow@test.com", Email="shadow@test.com"},
+                new() {DisplayName = "PureVanillaCookie", UserName = "vanilla@test.com", Email="vanilla@test.com"},
+                new() {DisplayName = "EternalSugarCookie", UserName = "swetyangel@test.com", Email="swetyangel@test.com"},
+            };
+
+            foreach (var user in users)
+            {
+                await userManager.CreateAsync(user, "Pa$$w0rd");
+            }
+        }
+
+
         if (context.Activities.Any()) return;
         var activities= new List<Activity>
         {
