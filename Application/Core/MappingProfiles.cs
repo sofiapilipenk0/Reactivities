@@ -18,11 +18,12 @@ public class MappingProfiles : Profile
         CreateMap<EditActivityDto, Activity>()
             .ForMember(d => d.Id, o => o.Ignore());
 
-        CreateMap<Activity, ActivityDto>()
-            .ForMember(d => d.HostDisplayName, o => o.MapFrom(s =>
-                s.Attendees.FirstOrDefault(x => x.IsHost)!.User.DisplayName))
-            .ForMember(d => d.HostId, o => o.MapFrom(s =>
-                s.Attendees.FirstOrDefault(x => x.IsHost)!.User.DisplayName));
+CreateMap<Activity, ActivityDto>()
+    .ForMember(d => d.HostDisplayName, o => o.MapFrom(s =>
+        s.Attendees.FirstOrDefault(x => x.IsHost)!.User.DisplayName))
+    .ForMember(d => d.HostId, o => o.MapFrom(s =>
+        s.Attendees.FirstOrDefault(x => x.IsHost)!.User.Id));
+
 
         CreateMap<ActivityAttendee, UserProfile>()
             .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.User.DisplayName))

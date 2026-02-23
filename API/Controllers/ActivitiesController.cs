@@ -7,6 +7,7 @@ using Application.Core;
 using Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -51,6 +52,7 @@ public class ActivitiesController : BaseApiController
     [HttpPost("{id}/attend")]
     public async Task<ActionResult> Attend(string id)
     {
+        return BadRequest("Testing 123");
         return HandleResult(await Mediator.Send(new UpdateAttendance.Command{Id = id}));
     }
 }

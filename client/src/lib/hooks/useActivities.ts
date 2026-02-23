@@ -14,8 +14,19 @@ const {data: activities, isLoading}= useQuery({
     const response = await agent.get<Activity[]>('/activities');
     return response.data;
   },
-  enabled: !id && location.pathname === '/activities' && !!currentUser
-});
+  enabled: !id && location.pathname === '/activities' && !!currentUser,
+  select: data => {
+    const transform = (activity: any) => {
+        const isHost = currentUser?.id === activity.hostId;
+        return {
+            ...activity,
+            isHost: isHost,
+            isGoing: !isHost && activity.attendees.some((x: any) => x.id === currentUser?.id)
+        }
+    };
+    return Array.isArray(data) ? data.map(transform) : transform(data);
+}
+  });
 
     const {data: activity, isLoading: isLoadingActivity} = useQuery({
         queryKey: ['activities', id],
@@ -23,7 +34,12 @@ const {data: activities, isLoading}= useQuery({
             const response = await agent.get<Activity>(`/activities/${id}`);
             return response.data;
         },
-        enabled: !!id && !!currentUser
+        enabled: !!id && !!currentUser,
+      select: data => ({
+    ...data,
+    isHost: currentUser?.id === data.hostId,
+    isGoing: currentUser && currentUser.id !== data.hostId && data.attendees.some(x => x.id === currentUser.id)
+})
     })
 
 const updateActivity = useMutation({
@@ -59,6 +75,45 @@ const updateActivity = useMutation({
         }
     });
 
+    const updateAttendance = useMutation({
+        mutationFn: async (id: string) =>{
+                await agent.post(`/activities/${id}/attend`)
+        },
+        onMutate: async (activityId: string) => {
+            await queryClient.cancelQueries({queryKey: ['activities', activityId]});
+                const prevActivity = queryClient.getQueryData<Activity>(['activities', activityId]);
+
+            queryClient.setQueryData<Activity>(['activities', activityId], oldActivity => {
+                if (!oldActivity || !currentUser){
+                    return oldActivity
+                }
+
+                const isHost = oldActivity.hostId === currentUser.id;
+                const isAttending = oldActivity.attendees.some(x => x.id === currentUser.id);
+
+                return {
+                    ...oldActivity,
+                    isCancelled: isHost ? !oldActivity.isCancelled : oldActivity.isCancelled,
+                    attendees: isAttending
+                        ? isHost
+                            ? oldActivity.attendees
+                            : oldActivity.attendees.filter(x => x.id !== currentUser.id)
+                        : [...oldActivity.attendees, {
+                            id: currentUser.id,
+                            displayName: currentUser.displayName,
+                            imageUrl: currentUser.imageUrl
+                        } as Profile]
+                }
+            })
+            return {prevActivity};
+        },
+        onError: (error, activityId, context) => {
+            console.log(error);
+            if (context?.prevActivity) {
+                queryClient.setQueryData(['activities', activityId], context.prevActivity)
+            }
+        }
+    })
 
     return{
         activities,
@@ -67,6 +122,7 @@ const updateActivity = useMutation({
         createActivity,
         deleteActivity,
         activity,
-        isLoadingActivity
+        isLoadingActivity,
+        updateAttendance
     }
 }

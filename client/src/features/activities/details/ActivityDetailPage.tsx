@@ -4,7 +4,8 @@ import { useActivities } from "../../../lib/hooks/useActivities";
 import ActivityDetailsHeader from "./ActivityDetailsHeader";
 import ActivityDetailsInfo from "./ActivityDetailsInfo";
 import ActivityDetailsChat from "./ActivityDetailsChat";
-import ActivityDetailsSidebar from "./ActivityDetailsSideBar";
+import ActivityDetailsSidebar from "./ActivityDetailsSideBar"; 
+
 
 
 export default function ActivityDetailPage() {
@@ -23,7 +24,7 @@ export default function ActivityDetailPage() {
             <ActivityDetailsChat/>
         </Grid>
         <Grid size={4}>
-            <ActivityDetailsSidebar/>
+            <ActivityDetailsSidebar activity={activity}/>
         </Grid>
     </Grid>
   )
