@@ -11,17 +11,19 @@ const location = useLocation();
 const {data: activities, isLoading}= useQuery({
   queryKey: ['activities'],
   queryFn: async () => {
-    const response = await agent.get<Activity[]>('/activities');
+    const response = await agent.get<Activity[]>('/activities/items');
     return response.data;
   },
   enabled: !id && location.pathname === '/activities' && !!currentUser,
   select: data => {
     const transform = (activity: any) => {
         const isHost = currentUser?.id === activity.hostId;
+        const host = activity.attendees.find((x: any) => x.id === activity.hostId);
         return {
             ...activity,
             isHost: isHost,
-            isGoing: !isHost && activity.attendees.some((x: any) => x.id === currentUser?.id)
+            isGoing: !isHost && activity.attendees.some((x: any) => x.id === currentUser?.id),
+            hostImageUrl: host?.imageUrl
         }
     };
     return Array.isArray(data) ? data.map(transform) : transform(data);
@@ -35,11 +37,14 @@ const {data: activities, isLoading}= useQuery({
             return response.data;
         },
         enabled: !!id && !!currentUser,
-      select: data => ({
+      select: data => {
+        const host = data.attendees.find(x => x.id === data.hostId);
+        return {
     ...data,
     isHost: currentUser?.id === data.hostId,
-    isGoing: currentUser && currentUser.id !== data.hostId && data.attendees.some(x => x.id === currentUser.id)
-})
+    isGoing: currentUser && currentUser.id !== data.hostId && data.attendees.some(x => x.id === currentUser.id),
+    hostImageUrl: host?.imageUrl
+}}
     })
 
 const updateActivity = useMutation({

@@ -68,6 +68,9 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGroup("api").MapIdentityApi<User>();
 
+// app.UseSwagger();
+// app.UseSwaggerUI();
+
 using var scope = app.Services.CreateScope();
 var services= scope.ServiceProvider;
 
