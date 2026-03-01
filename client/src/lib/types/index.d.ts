@@ -14,15 +14,20 @@ type Activity = {
     isHost: boolean
     hostId: string
     hostDisplayName: string
-    hostImageUrl: string
+    hostImageUrl?: string
 }
 
 type Profile = {
+    following: any
+    followersCount: ReactNode
     username: any
     id: string
     displayName: string
     bio?: string
-    imageUrl?: string 
+    imageUrl?: string
+    followersCount?: number
+    followingCount?: number
+    following?: boolean
 }
 
 type Photo = {

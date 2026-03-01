@@ -30,6 +30,7 @@
     <Folder Include="Profiles\Commands\" />
     <Folder Include="Profiles\DTOs\" />
     <Folder Include="Profiles\Queries\" />
+     <Folder Include="Profiles/Validators/" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

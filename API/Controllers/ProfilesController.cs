@@ -1,11 +1,10 @@
 using System;
 using Application.Profiles.Commands;
 using Application.Profiles.DTOs;
-using Application.Profiles.Queries;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
-
 namespace API.Controllers;
+using Application.Profiles.Queries;
 
 public class ProfilesController : BaseApiController
 {
@@ -34,6 +33,25 @@ public class ProfilesController : BaseApiController
         [HttpGet("{userId}")]
     public async Task<ActionResult<UserProfile>> GetProfile(string userId)
     {
-        return HandleResult(await Mediator.Send(new GetProfile.Query{UserId = userId}));
+        return HandleResult(await Mediator.Send(new GetProfile.Query{Id = userId}));
     }
-} 
+       [HttpPut]
+    public async Task<ActionResult> UpdateProfile(EditProfile.Command command)
+    {
+        return HandleResult(await Mediator.Send(command));
+    }
+
+     [HttpPost("{userId}/follow")]
+    public async Task<IActionResult> FollowToggle(string userId)
+    {
+        return HandleResult(await Mediator.Send(new FollowToggle.Command
+            { TargetUserId = userId }));
+    }
+
+    [HttpGet("{userId}/follow-list")]
+    public async Task<IActionResult> GetFollowings(string userId, string predicate)
+    {
+        return HandleResult(await Mediator.Send(new GetFollowings.Query {UserId = userId, Predicate = predicate}));
+    }
+
+}

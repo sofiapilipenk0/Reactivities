@@ -12,6 +12,7 @@ import LoginForm from "../../features/account/LoginForm";
 import RequireAuth from "./RequireAuth";
 import RegisterForm from "../../features/account/RegisterForm";
 import ProfilePage from "../../features/profiles/ProfilePage";
+import TableMain from "../../features/table/TableMain";
 
 export const router = createBrowserRouter([
     {
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
             {path: 'profiles/:id', element: <ProfilePage />},
             ]},
             {path: '', element: <HomePage />},
+            {path: 'table', element: <TableMain />},
             {path: 'counter', element: <Counter />},
             {path: 'errors', element: <TestErrors />},
             {path: 'not-found', element: <NotFound />},

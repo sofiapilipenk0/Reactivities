@@ -2,6 +2,7 @@ import axios from "axios";
 import { store } from "../stores/store";
 import { toast } from "react-toastify";
 import { router } from "../../app/router/Routes";
+import type { ActivityDto } from "../../features/table/types";
 
 const sleep = (delay: number) =>{
     return new Promise(resolve => {
@@ -28,6 +29,8 @@ agent.interceptors.response.use(
  async error =>{
     await sleep(1000);
     store.uiStore.isIdle()
+
+
 
     const {status, data} = error.response;
     switch(status){
@@ -60,5 +63,12 @@ agent.interceptors.response.use(
 
     return Promise.reject(error);
 });
+
+const Activities = {
+list: () => agent.get<ActivityDto[]>('/activities/items').then(res => res.data)
+
+};
+Object.assign(agent, { Activities });
+
 
 export default agent;

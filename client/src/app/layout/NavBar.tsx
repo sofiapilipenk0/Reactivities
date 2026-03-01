@@ -28,6 +28,9 @@ export default function NavBar() {
                     <MenuItemLink to='/activities'>
                     Activities
                     </MenuItemLink>
+                    <MenuItemLink to='/table'>
+                    Table
+                    </MenuItemLink>
                     <MenuItemLink to='/counter'>
                     Counter
                     </MenuItemLink>

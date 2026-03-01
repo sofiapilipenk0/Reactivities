@@ -6,9 +6,12 @@ using Application.Activities.Queries;
 using Application.Core;
 using Domain;
 using MediatR;
+using Application.Profiles.Commands;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Application.Profiles.Queries;
+
 
 namespace API.Controllers;
 
@@ -17,7 +20,8 @@ public class ActivitiesController : BaseApiController
     [HttpGet("items")]
     public async Task<ActionResult<List<ActivityDto>>> GetActivities()
     {
-        return await Mediator.Send(new GetActivityList.Query());
+
+    return HandleResult(await Mediator.Send(new GetActivityList.Query()));
     }
 
     [HttpGet("{id}")]
@@ -53,5 +57,17 @@ public class ActivitiesController : BaseApiController
     public async Task<ActionResult> Attend(string id)
     {
         return HandleResult(await Mediator.Send(new UpdateAttendance.Command{Id = id}));
+    }
+     [HttpPost("{userId}/follow")]
+    public async Task<IActionResult> Follow(string userId)
+    {
+        return HandleResult(await Mediator.Send(new FollowToggle.Command
+            { TargetUserId = userId }));
+    }
+
+    [HttpGet("{userId}/follow-list")]
+    public async Task<IActionResult> GetFollowings(string userId, string predicate)
+    {
+        return HandleResult(await Mediator.Send(new GetFollowings.Query {UserId = userId, Predicate = predicate}));
     }
 }
