@@ -11,7 +11,7 @@ import type { ActivityDto, Column } from './types';
 
 interface ActivityTableProps {
   columns: readonly Column[];
-  activities: ActivityDto[];
+  activities: { items: ActivityDto[], nextCursor?: any }; 
   page: number;
   rowsPerPage: number;
   handleChangePage: (_event: unknown, newPage: number) => void;
@@ -45,7 +45,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({
           </TableHead>
 
           <TableBody>
-            {activities
+            {activities.items
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((activity) => (
                 <TableRow hover key={activity.id}>
@@ -66,7 +66,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({
       <TablePagination
         rowsPerPageOptions={[1, 5]}
         component="div"
-        count={activities.length}
+        count={activities.items.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}

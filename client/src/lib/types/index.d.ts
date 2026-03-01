@@ -1,3 +1,9 @@
+type PagedList<T, TCursor> = {
+  [x: string]: any
+  items: T[],
+  nextCursor: TCursor
+}
+
 type Activity = {
     id: string
     title: string
@@ -38,6 +44,7 @@ type Photo = {
 type User = {
     id: string
     email: string
+    username: string;
     displayName: string
     imageUrl?: string
 }
