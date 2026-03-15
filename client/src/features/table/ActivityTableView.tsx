@@ -75,7 +75,6 @@ const ActivityTableView: FC<ActivityTableViewProps> = ({
       width: '100%',
       overflow: 'hidden' 
     }}>
-      {/* Панель фільтрів */}
       <Box sx={{ display:'flex', gap:2, alignItems:'center', flexShrink:0 }}>
         <ActivityFilter 
             onFilter={(start, end) => setDateRange({ start, end })} 
