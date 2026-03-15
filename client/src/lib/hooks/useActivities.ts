@@ -11,6 +11,7 @@ export const useActivities = (id?: string) => {
     const { currentUser } = useAccount();
     const {activityStore: {filter, startDate}} = useStore();
     
+    
     const { data: activitiesGroup, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useInfiniteQuery<
         PagedList<Activity, string>
     >({
@@ -68,7 +69,7 @@ export const useActivities = (id?: string) => {
 
     const updateActivity = useMutation({
         mutationFn: async (activity: Activity) => {
-            await agent.put('/activities', activity);
+            await agent.put(`/activities/${activity.id}`, activity);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({
@@ -145,6 +146,7 @@ export const useActivities = (id?: string) => {
         }
     })
 
+    
     return {
         activitiesGroup,
         isFetchingNextPage,

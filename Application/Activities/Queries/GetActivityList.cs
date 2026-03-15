@@ -1,10 +1,8 @@
-using System;
 using Application.Activities.DTOs;
 using Application.Core;
 using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -15,17 +13,25 @@ public class GetActivityList
 {
     public class Query : IRequest<Result<PagedList<ActivityDto, DateTime?>>>
     {
-    public required ActivityParams Params { get; set; }
+        public required ActivityParams Params { get; set; }
     }
-    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) : IRequestHandler<Query, Result<PagedList<ActivityDto, DateTime?>>>
+
+    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) 
+        : IRequestHandler<Query, Result<PagedList<ActivityDto, DateTime?>>>
     {
         public async Task<Result<PagedList<ActivityDto, DateTime?>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var query = context.Activities
-                .OrderBy(x => x.Date)
-                .Where(x =>
-                    x.Date >= (request.Params.Cursor ?? request.Params.StartDate))
-                .AsQueryable();
+            var query = context.Activities.AsQueryable();
+
+            if (request.Params.StartDate.HasValue)
+            {
+                query = query.Where(x => x.Date >= request.Params.StartDate.Value);
+            }
+
+            if (request.Params.EndDate.HasValue)
+            {
+                query = query.Where(x => x.Date <= request.Params.EndDate.Value);
+            }
 
             if (!string.IsNullOrEmpty(request.Params.Filter))
             {
@@ -37,11 +43,19 @@ public class GetActivityList
                 };
             }
 
-            var projectedActivities = query.ProjectTo<ActivityDto>(
-                mapper.ConfigurationProvider,
-                    new { currentUserId = userAccessor.GetUserId() });
+            var totalCount = await query.CountAsync(cancellationToken);
 
-            var activities = await projectedActivities
+            var cursorDate = request.Params.Cursor ?? request.Params.StartDate;
+
+            query = query.OrderBy(x => x.Date);
+
+            if (cursorDate.HasValue)
+            {
+                query = query.Where(x => x.Date >= cursorDate.Value);
+            }
+
+            var activities = await query
+                .ProjectTo<ActivityDto>(mapper.ConfigurationProvider, new { currentUserId = userAccessor.GetUserId() })
                 .Take(request.Params.PageSize + 1)
                 .ToListAsync(cancellationToken);
 
@@ -52,12 +66,11 @@ public class GetActivityList
                 activities.RemoveAt(activities.Count - 1);
             }
 
-            return Result<PagedList<ActivityDto, DateTime?>>.Success(
-                new PagedList<ActivityDto, DateTime?>
-                {
-                    Items = activities,
-                    NextCursor = nextCursor
-                });
+            return Result<PagedList<ActivityDto, DateTime?>>.Success(new PagedList<ActivityDto, DateTime?> {
+                Items = activities,
+                NextCursor = nextCursor,
+                TotalCount = totalCount
+            });
         }
     }
 }

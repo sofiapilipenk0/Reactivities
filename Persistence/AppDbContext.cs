@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
     public required DbSet<Photo> Photos { get; set; }
     public required DbSet<Comment> Comments { get; set; }
     public required DbSet<UserFollowing> UserFollowings { get; set; }
+    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -45,8 +46,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
         });
 
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
-            v => v.ToUniversalTime(), // Convert to UTC before saving
-            v => DateTime.SpecifyKind(v, DateTimeKind.Utc) // Read as UTC
+            v => v.ToUniversalTime(), 
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc) 
         );
 
         foreach (var entityType in builder.Model.GetEntityTypes())

@@ -1,78 +1,143 @@
-import React from 'react';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
+import React, { useState, useEffect, useCallback, type FC } from 'react';
+import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import type { ActivityDto, Column } from './types';
+import ActivityTableView from './ActivityTableView';
+import agent from '../../lib/api/agent';
 
-interface ActivityTableProps {
-  columns: readonly Column[];
-  activities: { items: ActivityDto[], nextCursor?: any }; 
-  page: number;
-  rowsPerPage: number;
-  handleChangePage: (_event: unknown, newPage: number) => void;
-  handleChangeRowsPerPage: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}
+const ActivityTable: FC<{ columns: readonly Column[] }> = ({ columns: initialColumns }) => {
+  const [activities, setActivities] = useState<ActivityDto[]>([]);
+  const [totalCount, setTotalCount] = useState(0); 
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(0); 
+  const [dynamicPageSize, setDynamicPageSize] = useState(0);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityDto | null>(null); 
+  
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [searchQuery, setSearchQuery] = useState('');
 
-const ActivityTable: React.FC<ActivityTableProps> = ({
-  columns,
-  activities,
-  page,
-  rowsPerPage,
-  handleChangePage,
-  handleChangeRowsPerPage,
-}) => {
+  const loadActivities = useCallback(async (cursor: string | null = null) => {
+    if (dynamicPageSize === 0) return; 
+
+    setIsLoading(true);
+    try {
+      const params = {
+        cursor: cursor || undefined,
+        pageSize: dynamicPageSize,    
+        startDate: dateRange.start || undefined,
+        endDate: dateRange.end || undefined,
+        filter: searchQuery || undefined,
+      };
+
+      const result = await agent.Activities.list(params); 
+      
+      setActivities(prev => cursor ? [...prev, ...result.items] : result.items);
+      setNextCursor(result.nextCursor);
+      
+      const count = result.totalCount ?? (result as any).TotalCount;
+      setTotalCount(count || 0);
+    } catch (error) {
+      console.error("API Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dateRange, searchQuery, dynamicPageSize]);
+
+  useEffect(() => {
+    if (dynamicPageSize > 0) {
+      setPage(0);
+      setSelectedActivity(null);
+      loadActivities(null);
+    }
+  }, [dateRange.start, dateRange.end, searchQuery, dynamicPageSize, loadActivities]);
+
+  const handlePageChange = (_e: any, newPage: number) => {
+    if (newPage !== page) {
+      setSelectedActivity(null);
+    }
+
+    if (newPage > page && (newPage + 1) * dynamicPageSize > activities.length && nextCursor) {
+      loadActivities(nextCursor);
+    }
+    setPage(newPage);
+  };
+
+  const [columnsOrder, setColumnsOrder] = useState<string[]>(initialColumns.map(c => c.id));
+  const [drawerWidth, setDrawerWidth] = useState(400);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
+    initialColumns.reduce((acc, col) => ({ ...acc, [col.id]: col.minWidth || 150 }), {})
+  );
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const orderedColumns = React.useMemo(() => 
+    columnsOrder.map(id => initialColumns.find(col => col.id === id)).filter(Boolean) as Column[],
+    [columnsOrder, initialColumns]
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setColumnsOrder(items => {
+        const oldIdx = items.indexOf(active.id as string);
+        const newIdx = items.indexOf(over.id as string);
+        return arrayMove(items, oldIdx, newIdx);
+      });
+    }
+  };
+
+  const handleColumnResize = (columnId: string, startX: number, startWidth: number) => {
+    const onMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(50, startWidth + (e.clientX - startX));
+      setColumnWidths(prev => ({ ...prev, [columnId]: newWidth }));
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleDrawerMouseDown = (e: React.MouseEvent) => {
+    const startX = e.clientX;
+    const startWidth = drawerWidth;
+    const handleMove = (ev: MouseEvent) => {
+      const delta = startX - ev.clientX;
+      const newWidth = startWidth + delta;
+      if (newWidth > 300 && newWidth < window.innerWidth * 0.7) setDrawerWidth(newWidth);
+    };
+    const handleUp = () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+    };
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  };
+
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align}
-                  sx={{ minWidth: column.minWidth }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {activities.items
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((activity) => (
-                <TableRow hover key={activity.id}>
-                  {columns.map((column) => {
-                    const value = activity[column.id];
-                    return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.format ? column.format(value) : String(value)}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TablePagination
-        rowsPerPageOptions={[1, 5]}
-        component="div"
-        count={activities.items.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-    </Paper>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={columnsOrder} strategy={horizontalListSortingStrategy}>
+        <ActivityTableView 
+          columns={orderedColumns}
+          filteredActivities={activities}
+          page={page}
+          totalCount={totalCount}
+          isLoading={isLoading}
+          selectedActivity={selectedActivity}
+          setSelectedActivity={setSelectedActivity}
+          drawerWidth={drawerWidth}
+          columnWidths={columnWidths}
+          handleColumnResize={handleColumnResize}
+          handleDrawerMouseDown={handleDrawerMouseDown}
+          setDateRange={setDateRange}
+          setSearchQuery={setSearchQuery}
+          handleChangePage={handlePageChange}
+          setDynamicRowsPerPage={setDynamicPageSize} 
+        />
+      </SortableContext>
+    </DndContext>
   );
 };
 

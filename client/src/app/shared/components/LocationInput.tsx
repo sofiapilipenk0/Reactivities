@@ -13,6 +13,7 @@ export default function LocationInput<T extends FieldValues>(props: Props<T>) {
     const [suggestions, setSuggestions] = useState<LocationIQSuggestion[]>([]);
     const [inputValue, setInputValue] = useState(field.value || '');
 
+    
     useEffect(() => {
         if (field.value && typeof field.value === 'object') {
             setInputValue(field.value.venue || '');

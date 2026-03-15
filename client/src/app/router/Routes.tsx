@@ -14,6 +14,8 @@ import RegisterForm from "../../features/account/RegisterForm";
 import ProfilePage from "../../features/profiles/ProfilePage";
 import TableMain from "../../features/table/TableMain";
 
+
+
 export const router = createBrowserRouter([
     {
         path: '/',
@@ -21,13 +23,13 @@ export const router = createBrowserRouter([
         children: [
             { element: <RequireAuth />, children: [
             {path: 'activities', element: <ActivityDashboard />},
+            { path: 'table', element: <TableMain /> },
             {path: 'activities/:id', element: <ActivityDetailPage />},
             {path: 'createActivity', element: <ActivityForm key='create'/>},
             {path: 'manage/:id', element: <ActivityForm />},
             {path: 'profiles/:id', element: <ProfilePage />},
             ]},
             {path: '', element: <HomePage />},
-            {path: 'table', element: <TableMain />},
             {path: 'counter', element: <Counter />},
             {path: 'errors', element: <TestErrors />},
             {path: 'not-found', element: <NotFound />},
